@@ -1,0 +1,49 @@
+.App {
+  background-color: lightblue;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+}
+.background {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.signUpForm {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+form {
+  padding: 10rem;
+  margin: 3rem;
+  background-color: white;
+  border-radius: 20px;
+}
+
+.formGroup {
+  margin: 2rem 0;
+  display: block;
+}
+
+.label {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+.control {
+  padding: 0.3rem;
+}
+
+.signUpBtn {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.loginHref {
+  text-decoration: none;
+}
