@@ -1,0 +1,5 @@
+.App {
+    background-color: lightblue;
+    min-height: 100vh;
+    display: flex;
+}
