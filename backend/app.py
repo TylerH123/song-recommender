@@ -12,7 +12,7 @@ SPOTIFY_TOKEN = ""
 # WEATHER_TO_GENRE = {
 #   "thunderstorm": "", 
 #   "drizzle": "",
-#   "rain:": "",
+#   "rain:": "jazz",
 #   "snow": "",
 #   "mist": "",
 #   "smoke": "",
@@ -70,6 +70,8 @@ def getRecommendedSongs():
   url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
   res = requests.get(url).json()
   weather = res["weather"][0]
+  
+  
   context = {}
   return res, 200
 
