@@ -45,13 +45,11 @@ def getSpotifySongs(genre):
   return res["tracks"]["items"]
 
 
-@app.route("/recommend/", methods =["GET"])
-def getRecommendedSongs():
+@app.route("/recommend/<int:zip>", methods =["GET"])
+def getRecommendedSongs(zip):
   """songs based on weather in area"""
-  # zip = request.form.get("zip")
 
   # get lat, lon
-  zip = 48104
   url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
   json = requests.get(url).json()
   lat, lon = json["lat"], json["lon"]
