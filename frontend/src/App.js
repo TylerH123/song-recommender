@@ -1,19 +1,22 @@
 import "./App.css";
 import Login from "./pages/Login";
 import {
-  createBrowserRouter,
-  createRoutesFromElements,
+  BrowserRouter as Router,
+  Switch,
   Route,
-  Routes,
-  RouterProvider,
+  Redirect,
 } from "react-router-dom";
 function App() {
   return (
     <div className="App">
       <div className="background">
-        <Routes>
-          <Route path="/" element={<Login />} />
-        </Routes>
+        <Router>
+          <Switch>
+            <Route exact path="/">
+              <Login />
+            </Route>
+          </Switch>
+        </Router>
       </div>
     </div>
   );
