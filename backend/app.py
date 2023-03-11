@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from dotenv import load_dotenv
-import os, base64, requests, json, random
+import os, base64, requests, json, random, numpy as np
 
 load_dotenv()
 
@@ -42,8 +42,7 @@ def getSpotifySongs(genre):
   token = getAccessToken()
   headers = get_auth_header(token)
   res = requests.get(url, headers=headers).json()
-  # songs = res["tracks"]["items"]
-  return res, 200
+  return res["tracks"]["items"]
 
 
 @app.route("/recommend/", methods =["GET"])
@@ -67,9 +66,11 @@ def getRecommendedSongs():
   songs = []
   for genre in genres:
     songs.append(getSpotifySongs(genre))
+  songs = np.array(songs)
+  np.random.shuffle(songs)
   context = {
     "weather": weather,
-    "songs": songs
+    "songs": songs.tolist(),
   }
   return context, 200
 

@@ -1,6 +1,16 @@
 import { useState } from "react";
 
 function sendReq() {
+  let url = "http://localhost:5000/songs/"
+  fetch(url, { credentials: "same-origin" })
+    .then((response) => {
+      if (!response.ok) throw Error(response.statusText);
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((error) => console.log(error));
   return 0;
 }
 
