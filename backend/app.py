@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from dotenv import load_dotenv
-import os, base64, requests, json
+import os, base64, requests, json, random
 
 load_dotenv()
 
@@ -8,25 +8,25 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 COUNTRY_CODE = "US" # US ISO 3166 country code 
-SPOTIFY_TOKEN = ""
-# WEATHER_TO_GENRE = {
-#   "thunderstorm": "", 
-#   "drizzle": "",
-#   "rain:": "jazz",
-#   "snow": "",
-#   "mist": "",
-#   "smoke": "",
-#   "haze": "",
-#   "dust": "",
-#   "fog": "",
-#   "sand": "",
-#   "ash": ""
-#   "sqall": "",
-#   "tornado": "",
-#   "clear": "",
-#   "clouds: "",
-# }
+WEATHER_TO_GENRE = {
+  "thunderstorm": ["classical", "jazz", "ambient"], 
+  "drizzle": ["chill", "bossanova", "downtempo"],
+  "rain": ["blues", "soul", "r&b"],
+  "snow": ["classical", "new age", "orchestral"],
+  "mist": ["ambient", "chillwave", "trip-hop"],
+  "smoke": ["jazz", "experimental", "instrumental"],
+  "haze": ["downtempo", "chillhop", "trip-hop"],
+  "dust": ["rock", "heavy-metal", "punk"],
+  "fog": ["classical", "ambient", "jazz", "piano"],
+  "sand": ["world music", "desert", "instrumental"],
+  "ash": ["classical", "ambient", "instrumental"],
+  "squall": ["metal", "rock", "edm"],
+  "tornado": ["hard rock", "heavy-metal", "grunge"],
+  "clear": ["pop", "electronic", "ambient"],
+  "clouds": ["indie", "folk", "ambient"],
+}
 app = Flask(__name__)
+
 
 @app.route("/")
 def index():
@@ -37,21 +37,12 @@ def index():
   return jsonify(**json), 200
 
 
-def getAvailableGenres():
-  url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-  token = getAccessToken()
-  headers = get_auth_header(token)
-  res = requests.get(url, headers=headers).json()
-  return res['genres']
-
-
-@app.route("/songs/")
-def getSpotifySongs():
-  genre = "pop"
+def getSpotifySongs(genre):
   url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
   token = getAccessToken()
   headers = get_auth_header(token)
   res = requests.get(url, headers=headers).json()
+  # songs = res["tracks"]["items"]
   return res, 200
 
 
@@ -69,11 +60,18 @@ def getRecommendedSongs():
   # get weather
   url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
   res = requests.get(url).json()
-  weather = res["weather"][0]
+  weather = res["weather"][0]["main"].lower()
   
-  
-  context = {}
-  return res, 200
+  # get songs 
+  genres = WEATHER_TO_GENRE[weather]
+  songs = []
+  for genre in genres:
+    songs.append(getSpotifySongs(genre))
+  context = {
+    "weather": weather,
+    "songs": songs
+  }
+  return context, 200
 
 
 @app.route("/popular/")
@@ -102,6 +100,14 @@ def getAccessToken():
 
 def get_auth_header(token):
   return {"Authorization": "Bearer " + token}
+
+
+def getAvailableGenres():
+  url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
+  token = getAccessToken()
+  headers = get_auth_header(token)
+  res = requests.get(url, headers=headers).json()
+  return res['genres']
 
 
 if __name__ == "__main__":
