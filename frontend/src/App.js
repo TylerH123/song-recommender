@@ -1,7 +1,9 @@
 import React from 'react';
 import "./App.css";
 import Login from "./pages/Login";
-import Home from "./pages/home";
+import Signup from "./pages/Signup";
+import Weather from "./pages/Weather";
+
 import {
 	BrowserRouter as Router,
 	Switch,
@@ -18,8 +20,11 @@ function App() {
 						<Route exact path="/login">
 							<Login />
 						</Route>
+						<Route exact path="/signup">
+							<Signup />
+						</Route>
 						<Route exact path="/">
-							<Home />
+							<Weather />
 						</Route>
 					</Switch>
 				</Router>
