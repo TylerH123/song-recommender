@@ -57,6 +57,8 @@ def getRecommendedSongs(zip):
   # get weather
   url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
   res = requests.get(url).json()
+  temp = int(json['main']['temp'])
+  temp = 1.8*(temp-273.15)+32
   weather = res["weather"][0]["main"].lower()
   
   # get songs 
@@ -67,6 +69,7 @@ def getRecommendedSongs(zip):
   songs = np.array(songs)
   np.random.shuffle(songs)
   context = {
+    "temperature": temp,
     "weather": weather,
     "songs": songs.tolist(),
   }
