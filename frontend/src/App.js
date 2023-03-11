@@ -1,5 +1,8 @@
 import "./App.css";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Weather from "./pages/Weather";
+
 import {
   BrowserRouter as Router,
   Switch,
@@ -12,8 +15,14 @@ function App() {
       <div className="background">
         <Router>
           <Switch>
-            <Route exact path="/">
+            <Route exact path="/login">
               <Login />
+            </Route>
+            <Route exact path="/signup">
+              <Signup />
+            </Route>
+            <Route exact path="/">
+              <Weather />
             </Route>
           </Switch>
         </Router>
