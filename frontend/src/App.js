@@ -1,14 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route }
-	from 'react-router-dom';
 import "./App.css";
 import Login from "./pages/Login";
+import Home from "./pages/home";
 import {
 	BrowserRouter as Router,
 	Switch,
 	Route,
 	Redirect,
 } from "react-router-dom";
+
 function App() {
 	return (
 		<div className="App">
@@ -17,6 +17,9 @@ function App() {
 					<Switch>
 						<Route exact path="/">
 							<Login />
+						</Route>
+						<Route exact path="/home">
+							<Home />
 						</Route>
 					</Switch>
 				</Router>
