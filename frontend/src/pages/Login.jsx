@@ -1,6 +1,7 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import { Link } from "react-router-dom";
 const Login = () => {
   return (
     <div className="signUpForm">
@@ -27,9 +28,9 @@ const Login = () => {
         </Button>
         <div>
           Don't have an account?
-          <a href="/login" className="loginHref">
+          <Link to="/signup" className="loginHref">
             Sign Up
-          </a>
+          </Link>
         </div>
       </Form>
     </div>
