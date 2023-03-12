@@ -7,9 +7,9 @@ load_dotenv()
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-COUNTRY_CODE = "US" # US ISO 3166 country code 
+COUNTRY_CODE = "US" # US ISO 3166 country code
 WEATHER_TO_GENRE = {
-  "thunderstorm": ["classical", "jazz", "ambient"], 
+  "thunderstorm": ["classical", "jazz", "ambient"],
   "drizzle": ["chill", "bossanova", "downtempo"],
   "rain": ["blues", "soul", "r&b"],
   "snow": ["classical", "new age", "orchestral"],
@@ -59,18 +59,19 @@ def getRecommendedSongs(zip):
   temp = int(json['main']['temp'])
   temp = 1.8*(temp-273.15)+32
   weather = res["weather"][0]["main"].lower()
-  
-  # get songs 
+
+  # get songs
   genres = WEATHER_TO_GENRE[weather]
-  songs = []
+  songs_map = {}
   for genre in genres:
-    songs.append(getSpotifySongs(genre))
-  songs = np.array(songs)
-  np.random.shuffle(songs)
+    for song in getSpotifySongs(genre):
+      if genre not in songs_map:
+        songs_map[genre] = []
+      songs_map[genre].append(song)
   context = {
     "temperature": temp,
     "weather": weather,
-    "songs": songs.tolist(),
+    "songs": songs_map,
   }
   response = jsonify(context)
   response.headers.add('Access-Control-Allow-Origin', '*')
@@ -84,7 +85,7 @@ def getPopularSongs():
   return
 
 
-def getAccessToken(): 
+def getAccessToken():
   auth_string = CLIENT_ID + ":" + CLIENT_SECRET
   auth_bytes = auth_string.encode("utf-8")
   auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
@@ -98,7 +99,7 @@ def getAccessToken():
   result = requests.post(url, headers=headers, data=data)
   json_res = json.loads(result.content)
   token = json_res["access_token"]
-  return token 
+  return token
 
 
 def get_auth_header(token):
