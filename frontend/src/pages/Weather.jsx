@@ -14,8 +14,8 @@ const Weather = () => {
       try {
         const res = await axios.get(url, { mode: "cors" });
         // const data = res.json();
-        setSongs(res);
         setFetched(true);
+        setSongs(res.data.songs);
         console.log(res);
       } catch (err) {
         console.log(err);
@@ -46,8 +46,21 @@ const Weather = () => {
             onKeyDown={sendReq}
           />
         </div>
+        {
+          <div>
+            {Object.keys(songs).map((genre) => (
+              <>
+                <h2>{genre}</h2>
+                <ul>
+                  {songs[genre].map((song) => (
+                    <li>{song.name}</li>
+                  ))}
+                </ul>
+              </>
+            ))}
+          </div>
+        }
       </main>
-      {fetched && <Redirect to={{ pathname: "/songs" }} />}
     </div>
   );
 };

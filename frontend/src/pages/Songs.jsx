@@ -1,11 +1,7 @@
-import React from 'react'
+import React from "react";
 
-const Songs = () => {
-  return (
-    <div>
-        
-    </div>
-  )
-}
+const Songs = ({ songs }) => {
+  return <div>{songs.map((song) => song.map((s) => s.name))}</div>;
+};
 
-export default Songs
+export default Songs;
