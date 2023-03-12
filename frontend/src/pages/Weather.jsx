@@ -1,17 +1,27 @@
 import { useState } from "react";
 import axios from "axios";
+import Songs from "./Songs";
+import { Redirect } from "react-router";
 const Weather = () => {
   const [zipCode, setZipCode] = useState();
-  async function sendReq() {
-    console.log("request");
-    let url = `http://localhost:5000/recommend/${zipCode}`;
-    try {
-      const res = await axios.get(url);
-      const data = res.json();
-      console.log(data);
-    } catch (err) {
-      console.log(err);
+  const [songs, setSongs] = useState([]);
+  const [fetched, setFetched] = useState(false);
+  async function sendReq(e) {
+    // e.preventDefault();
+    if (e.key === "Enter") {
+      console.log("request");
+      let url = `http://localhost:5000/recommend/${zipCode}`;
+      try {
+        const res = await axios.get(url, { mode: "cors" });
+        // const data = res.json();
+        setSongs(res);
+        setFetched(true);
+        console.log(res);
+      } catch (err) {
+        console.log(err);
+      }
     }
+
     // fetch(url, { credentials: "same-origin" })
     //   .then((response) => {
     //     if (!response.ok) throw Error(response.statusText);
@@ -27,17 +37,17 @@ const Weather = () => {
     <div className="weatherDiv">
       <main className="weatherMain">
         <div className="searchBox">
-          <form onSubmit={sendReq}>
-            <input
-              type="text"
-              className="searchBar"
-              placeholder="Search for zipcode..."
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
-            />
-          </form>
+          <input
+            type="text"
+            className="searchBar"
+            placeholder="Search for zipcode..."
+            value={zipCode}
+            onChange={(e) => setZipCode(e.target.value)}
+            onKeyDown={sendReq}
+          />
         </div>
       </main>
+      {fetched && <Redirect to={{ pathname: "/songs" }} />}
     </div>
   );
 };
