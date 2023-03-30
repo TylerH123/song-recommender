@@ -57,7 +57,7 @@ def getRecommendedSongs(zip):
   # get weather
   url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
   res = requests.get(url).json()
-  temp = int(json['main']['temp'])
+  temp = int(res['main']['temp'])
   temp = 1.8*(temp-273.15)+32
   weather = res["weather"][0]["main"].lower()
 
@@ -65,6 +65,7 @@ def getRecommendedSongs(zip):
   genres = WEATHER_TO_GENRE[weather]
   songs_map = defaultdict(list)
   for genre in genres:
+    songs_map[genre] = []
     for song in getSpotifySongs(genre):
       songs_map[genre].append(song)
   context = {
