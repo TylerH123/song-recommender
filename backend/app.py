@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 import os, base64, requests, json, random, numpy as np
+from collections import defaultdict
 
 load_dotenv()
 
@@ -62,11 +63,9 @@ def getRecommendedSongs(zip):
 
   # get songs
   genres = WEATHER_TO_GENRE[weather]
-  songs_map = {}
+  songs_map = defaultdict(list)
   for genre in genres:
     for song in getSpotifySongs(genre):
-      if genre not in songs_map:
-        songs_map[genre] = []
       songs_map[genre].append(song)
   context = {
     "temperature": temp,
