@@ -1,117 +1,162 @@
 from flask import Flask, jsonify
 from dotenv import load_dotenv
-import os, base64, requests, json, random, numpy as np
+import hashlib
+import os
+import base64
+import requests
+import json
+import random
+import numpy as np
+import sqlite3
 
 load_dotenv()
 
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-COUNTRY_CODE = "US" # US ISO 3166 country code
+COUNTRY_CODE = "US"  # US ISO 3166 country code
 WEATHER_TO_GENRE = {
-  "thunderstorm": ["classical", "jazz", "ambient"],
-  "drizzle": ["chill", "bossanova", "downtempo"],
-  "rain": ["blues", "soul", "r&b"],
-  "snow": ["classical", "new age", "orchestral"],
-  "mist": ["ambient", "chillwave", "trip-hop"],
-  "smoke": ["jazz", "experimental", "instrumental"],
-  "haze": ["downtempo", "chillhop", "trip-hop"],
-  "dust": ["rock", "heavy-metal", "punk"],
-  "fog": ["classical", "ambient", "jazz", "piano"],
-  "sand": ["world music", "desert", "instrumental"],
-  "ash": ["classical", "ambient", "instrumental"],
-  "squall": ["metal", "rock", "edm"],
-  "tornado": ["hard rock", "heavy-metal", "grunge"],
-  "clear": ["pop", "electronic", "ambient"],
-  "clouds": ["indie", "folk", "ambient"],
+    "thunderstorm": ["classical", "jazz", "ambient"],
+    "drizzle": ["chill", "bossanova", "downtempo"],
+    "rain": ["blues", "soul", "r&b"],
+    "snow": ["classical", "new age", "orchestral"],
+    "mist": ["ambient", "chillwave", "trip-hop"],
+    "smoke": ["jazz", "experimental", "instrumental"],
+    "haze": ["downtempo", "chillhop", "trip-hop"],
+    "dust": ["rock", "heavy-metal", "punk"],
+    "fog": ["classical", "ambient", "jazz", "piano"],
+    "sand": ["world music", "desert", "instrumental"],
+    "ash": ["classical", "ambient", "instrumental"],
+    "squall": ["metal", "rock", "edm"],
+    "tornado": ["hard rock", "heavy-metal", "grunge"],
+    "clear": ["pop", "electronic", "ambient"],
+    "clouds": ["indie", "folk", "ambient"],
 }
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
-  json = {
-    "recommender": "/recommend",
-    "popular songs": "/popular"
-  }
-  return jsonify(**json), 200
+    json = {
+        "recommender": "/recommend",
+        "popular songs": "/popular"
+    }
+    return jsonify(**json), 200
 
 
 def getSpotifySongs(genre):
-  url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
-  token = getAccessToken()
-  headers = get_auth_header(token)
-  res = requests.get(url, headers=headers).json()
-  return res["tracks"]["items"]
+    url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
+    token = getAccessToken()
+    headers = get_auth_header(token)
+    res = requests.get(url, headers=headers).json()
+    return res["tracks"]["items"]
 
 
-@app.route("/recommend/<int:zip>", methods =["GET"])
+@app.route("/login", methods=["POST"])
+def getLogin(user, pwd):
+    pwd = hashlib.sha512(pwd.encode())
+    pwd.update("randomsalt".encode())
+    con = sqlite3.connect("497.db")
+    cur = con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS logins(name, pwdhash, song)")
+    res = cur.execute("SELECT * FROM logins WHERE name=? AND pwdhash=?",(user, pwd.hexdigest(),))
+    ans = res.fetchone()
+    if ans is None:
+        print("none exists")
+        print(pwd.hexdigest())
+    else:
+        print("found one")
+        print(ans)
+    return 
+
+@app.route("/register", methods=["POST"])
+def register(user, pwd):
+    con = sqlite3.connect("497.db")
+    cur = con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS logins(name, pwdhash, song)")
+    res = cur.execute("SELECT * FROM logins WHERE name=?", (user,))
+    if res.fetchone() is not None:
+        #print("user exists")
+        pass
+    else:
+        #print("doesn't exist")
+        pwd = hashlib.sha512(pwd.encode())
+        pwd.update("randomsalt".encode())
+        res = cur.execute("INSERT into logins VALUES(?, ? ,?)", (user, pwd.hexdigest(), "test-song"))  
+        con.commit()
+def test1():
+    register("test1", "test")
+    getLogin("test1", "test")
+
+if __name__ == '__main__' :
+    test1()
+@app.route("/recommend/<int:zip>", methods=["GET"])
 def getRecommendedSongs(zip):
-  """songs based on weather in area"""
-  # get lat, lon
-  url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
-  json = requests.get(url).json()
-  lat, lon = json["lat"], json["lon"]
+    """songs based on weather in area"""
+    # get lat, lon
+    url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
+    json = requests.get(url).json()
+    lat, lon = json["lat"], json["lon"]
 
-  # get weather
-  url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
-  res = requests.get(url).json()
-  temp = int(res['main']['temp'])
-  temp = 1.8*(temp-273.15)+32
-  weather = res["weather"][0]["main"].lower()
+    # get weather
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
+    res = requests.get(url).json()
+    temp = int(res['main']['temp'])
+    temp = 1.8*(temp-273.15)+32
+    weather = res["weather"][0]["main"].lower()
 
-  # get songs
-  genres = WEATHER_TO_GENRE[weather]
-  songs_map = {}
-  for genre in genres:
-    songs_map[genre] = []
-    for song in getSpotifySongs(genre):
-      songs_map[genre].append(song)
-  context = {
-    "temperature": temp,
-    "weather": weather,
-    "songs": songs_map,
-  }
-  response = jsonify(context)
-  response.headers.add('Access-Control-Allow-Origin', '*')
-  return response, 200
+    # get songs
+    genres = WEATHER_TO_GENRE[weather]
+    songs_map = {}
+    for genre in genres:
+        songs_map[genre] = []
+        for song in getSpotifySongs(genre):
+            songs_map[genre].append(song)
+    context = {
+        "temperature": temp,
+        "weather": weather,
+        "songs": songs_map,
+    }
+    response = jsonify(context)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response, 200
 
 
 @app.route("/popular/")
 def getPopularSongs():
-  """popular songs in the area"""
-  url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
-  return
+    """popular songs in the area"""
+    url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
+    return
 
 
 def getAccessToken():
-  auth_string = CLIENT_ID + ":" + CLIENT_SECRET
-  auth_bytes = auth_string.encode("utf-8")
-  auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
-  url = "https://accounts.spotify.com/api/token"
-  headers = {
-    "Authorization": "Basic " + auth_base64,
-    "Content-Type": "application/x-www-form-urlencoded"
-  }
+    auth_string = CLIENT_ID + ":" + CLIENT_SECRET
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": "Basic " + auth_base64,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
 
-  data = {"grant_type": "client_credentials"}
-  result = requests.post(url, headers=headers, data=data)
-  json_res = json.loads(result.content)
-  token = json_res["access_token"]
-  return token
+    data = {"grant_type": "client_credentials"}
+    result = requests.post(url, headers=headers, data=data)
+    json_res = json.loads(result.content)
+    token = json_res["access_token"]
+    return token
 
 
 def get_auth_header(token):
-  return {"Authorization": "Bearer " + token}
+    return {"Authorization": "Bearer " + token}
 
 
 def getAvailableGenres():
-  url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-  token = getAccessToken()
-  headers = get_auth_header(token)
-  res = requests.get(url, headers=headers).json()
-  return res['genres']
+    url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
+    token = getAccessToken()
+    headers = get_auth_header(token)
+    res = requests.get(url, headers=headers).json()
+    return res['genres']
 
 
 if __name__ == "__main__":
-  app.run()
+    app.run()
