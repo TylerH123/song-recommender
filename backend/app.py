@@ -15,6 +15,7 @@ load_dotenv()
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+ZIP_API_KEY = os.getenv("ZIP_API_KEY")
 COUNTRY_CODE = "US"  # US ISO 3166 country code
 WEATHER_TO_GENRE = {
     "thunderstorm": ["classical", "jazz", "ambient"],
@@ -49,7 +50,7 @@ def index():
 def getSpotifySongs(genre):
     url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
     token = getAccessToken()
-    headers = get_auth_header(token)
+    headers = {"Authorization": "Bearer " + token}
     res = requests.get(url, headers=headers).json()
     return res["tracks"]["items"]
 
@@ -106,6 +107,7 @@ def getRecommendedSongs(zip):
     # get lat, lon
     url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
     json = requests.get(url).json()
+    print(json)
     lat, lon = json["lat"], json["lon"]
 
     # get weather
@@ -132,27 +134,26 @@ def getRecommendedSongs(zip):
     return response, 200
 
 
-@app.route("/popular/")
-def getPopularSongs():
+@app.route("/popular/<int:zipcode>", methods=['GET'])
+def getPopularSongs(zipcode):
     """popular songs in the area"""
-    zipcode = request.args.get("zip_code")
-    if not zipcode:
-        return jsonify({"error": "bad request"}), 400
-    con = get_db()
-    cur = con.cursor()
-    url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
-    return
+    # zipcode = request.args.get("zip_code")
+    url = f"https://app.zipcodebase.com/api/v1/search?apikey={ZIP_API_KEY}&codes={zipcode}&country=US"
+    # if not zipcode:
+    #     return jsonify({"error": "bad request"}), 400
+    # # url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
+    data = requests.get(url).json()
+    print(data['results'][str(zipcode)][0]['state'])
+    return jsonify(data), 200
 
 
-@app.route("/favorite/")
+@app.route("/favorite", methods=['POST'])
 def favoriteSong():
-    """favorite a song."""
+    """Favorite a song."""
     song_id = request.args.get("song_id")
     zipcode = request.args.get("zip_code")
     if not song_id or not zipcode:
         return jsonify({"error": "bad request"}), 400
-    con = get_db()
-    cur = con.cursor()
     if uid not in session:
         return jsonify({"error": "unauthorized"}), 401
     uid = session['user_id']
@@ -179,14 +180,10 @@ def getAccessToken():
     return token
 
 
-def get_auth_header(token):
-    return {"Authorization": "Bearer " + token}
-
-
 def getAvailableGenres():
     url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
     token = getAccessToken()
-    headers = get_auth_header(token)
+    headers = {"Authorization": "Bearer " + token}
     res = requests.get(url, headers=headers).json()
     return res['genres']
 

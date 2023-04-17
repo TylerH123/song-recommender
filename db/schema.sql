@@ -14,7 +14,7 @@ CREATE TABLE songs(
 CREATE TABLE favorites(
     uid INTEGER, 
     sid INTEGER,
-    zipcode INTEGER, 
+    state VARCHAR(256), 
     PRIMARY KEY (uid, sid),
     FOREIGN KEY (uid) REFERENCES users (uid)
         ON DELETE CASCADE, 

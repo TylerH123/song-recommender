@@ -1,7 +1,7 @@
 import sqlite3
-import flask
+from flask import g, Flask
 
-
+app = Flask(__name__)
 def get_db():
     """Open a new database connection."""
     if 'sqlite_db' not in g:
@@ -19,7 +19,7 @@ def close_db(error):
     https://flask.palletsprojects.com/en/1.0.x/appcontext/#storing-data
     """
     assert error or not error  # Needed to avoid superfluous style error
-    sqlite_db = flask.g.pop('sqlite_db', None)
+    sqlite_db = g.pop('sqlite_db', None)
     if sqlite_db is not None:
         sqlite_db.commit()
         sqlite_db.close()
@@ -27,23 +27,28 @@ def close_db(error):
 
 def get_user(user, pwd):
     """Return user."""
-	con = get_db()    
+    con = get_db()    
     cur = con.cursor()
     res = cur.execute("SELECT * FROM users WHERE username=? AND password=?", (user, pwd))
     return res.fetchone()
 
 
 def find_user(user):
-	"""Find user."""
-	con = get_db()
+    """Find user."""
+    con = get_db()
     cur = con.cursor()
     res = cur.execute("SELECT * FROM users WHERE username=?", (user,))
-	return res.fetchone()
+    return res.fetchone()
 
 
 def insert_user(user, pwd):
-	"""Insert new user into db."""
-	con = get_db()
+    """Insert new user into db."""
+    con = get_db()
     cur = con.cursor()
     cur.execute("INSERT into users (username, password) VALUES(?, ?)", (user, pwd))
     con.commit()         
+
+
+def get_songs_at_state(state):
+    """Get songs for given state."""
+    
