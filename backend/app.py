@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, session, g
 from flask_cors import CORS
 from dotenv import load_dotenv
-import hashlib
 import os
 import base64
 import requests
@@ -9,6 +8,8 @@ import json
 import random
 import numpy as np
 import model
+from datetime import datetime
+import threading
 
 load_dotenv()
 
@@ -38,6 +39,26 @@ WEATHER_TO_GENRE = {
 app = Flask(__name__)
 CORS(app)
 
+
+def getAccessToken():
+    auth_string = CLIENT_ID + ":" + CLIENT_SECRET
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": "Basic " + auth_base64,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {"grant_type": "client_credentials"}
+    result = requests.post(url, headers=headers, data=data)
+    json_res = json.loads(result.content)
+    token = json_res["access_token"]
+    return token
+
+
+access_token = getAccessToken()
+
+
 @app.route("/")
 def index():
     json = {
@@ -47,12 +68,13 @@ def index():
     return jsonify(**json), 200
 
 
-def getSpotifySongs(genre):
+def getSpotifySongs(genre, songs_map):
     url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
-    token = getAccessToken()
-    headers = {"Authorization": "Bearer " + token}
+    headers = {"Authorization": "Bearer " + access_token}
     res = requests.get(url, headers=headers).json()
-    return res["tracks"]["items"]
+    songs_map[genre] = [] 
+    for song in res["tracks"]["items"]:
+        songs_map[genre].append(song)
 
 
 @app.route("/login", methods=["POST"])
@@ -107,7 +129,6 @@ def getRecommendedSongs(zip):
     # get lat, lon
     url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
     json = requests.get(url).json()
-    print(json)
     lat, lon = json["lat"], json["lon"]
 
     # get weather
@@ -118,12 +139,18 @@ def getRecommendedSongs(zip):
     weather = res["weather"][0]["main"].lower()
 
     # get songs
+    print(datetime.now())
     genres = WEATHER_TO_GENRE[weather]
     songs_map = {}
+    threads = []
     for genre in genres:
         songs_map[genre] = []
-        for song in getSpotifySongs(genre):
-            songs_map[genre].append(song)
+        print(datetime.now())
+        g_thread = threading.Thread(target=getSpotifySongs, args=(genre, songs_map))
+        threads.append(g_thread)
+        g_thread.start() 
+    for th in threads:
+        th.join() 
     context = {
         "temperature": temp,
         "weather": weather,
@@ -131,6 +158,7 @@ def getRecommendedSongs(zip):
     }
     response = jsonify(context)
     response.headers.add('Access-Control-Allow-Origin', '*')
+    print(datetime.now())
     return response, 200
 
 
@@ -163,27 +191,9 @@ def favoriteSong():
     return response, 200
 
 
-def getAccessToken():
-    auth_string = CLIENT_ID + ":" + CLIENT_SECRET
-    auth_bytes = auth_string.encode("utf-8")
-    auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
-    url = "https://accounts.spotify.com/api/token"
-    headers = {
-        "Authorization": "Basic " + auth_base64,
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-
-    data = {"grant_type": "client_credentials"}
-    result = requests.post(url, headers=headers, data=data)
-    json_res = json.loads(result.content)
-    token = json_res["access_token"]
-    return token
-
-
 def getAvailableGenres():
     url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-    token = getAccessToken()
-    headers = {"Authorization": "Bearer " + token}
+    headers = {"Authorization": "Bearer " + access_token}
     res = requests.get(url, headers=headers).json()
     return res['genres']
 
