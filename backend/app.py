@@ -8,7 +8,6 @@ import json
 import random
 import numpy as np
 import model
-from datetime import datetime
 import threading
 
 load_dotenv()
@@ -139,13 +138,11 @@ def getRecommendedSongs(zip):
     weather = res["weather"][0]["main"].lower()
 
     # get songs
-    print(datetime.now())
     genres = WEATHER_TO_GENRE[weather]
     songs_map = {}
     threads = []
     for genre in genres:
         songs_map[genre] = []
-        print(datetime.now())
         g_thread = threading.Thread(target=getSpotifySongs, args=(genre, songs_map))
         threads.append(g_thread)
         g_thread.start() 
@@ -158,7 +155,6 @@ def getRecommendedSongs(zip):
     }
     response = jsonify(context)
     response.headers.add('Access-Control-Allow-Origin', '*')
-    print(datetime.now())
     return response, 200
 
 
