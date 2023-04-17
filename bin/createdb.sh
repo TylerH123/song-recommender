@@ -1,4 +1,5 @@
 #!/bin/bash
 
-rm -rf var/db.sqlite3
+rm -rf var/
+mkdir var
 sqlite3 var/db.sqlite3 < db/schema.sql

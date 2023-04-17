@@ -8,7 +8,7 @@ import requests
 import json
 import random
 import numpy as np
-import sqlite3
+import model
 
 load_dotenv()
 
@@ -46,16 +46,6 @@ def index():
     return jsonify(**json), 200
 
 
-def get_db():
-    """Open a new database connection."""
-    if 'sqlite_db' not in g:
-        g.sqlite_db = sqlite3.connect("../var/db.sqlite3")
-        # Foreign keys have to be enabled per-connection.  This is an sqlite3
-        # backwards compatibility thing.
-        g.sqlite_db.execute('PRAGMA foreign_keys = ON')
-    return g.sqlite_db
-
-
 def getSpotifySongs(genre):
     url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
     token = getAccessToken()
@@ -69,20 +59,13 @@ def login():
     data = request.get_json(silent=True)
     user = data.get('username')
     pwd = data.get('password')    
-    con = get_db()    
-    cur = con.cursor()
-    res = cur.execute("SELECT * FROM users WHERE username=? AND password=?", (user, pwd))
-    ans = res.fetchone()
+    ans = model.get_user(user, pwd)
     if ans is None:
         print("none exists")
-        print(pwd)
         context = {}
         response = jsonify(context)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response, 404
-    else:
-        print("found one")
-        print(ans)
     context = {
         "user": user,
         "pwd": pwd
@@ -93,15 +76,11 @@ def login():
 
 @app.route("/register", methods=["POST"])
 def register():
-    print("reached register")
     data = request.get_json(silent=True)
     user = data.get('username')
     pwd = data.get('password')
-    con = get_db()
-    cur = con.cursor()
-    print(user, pwd)
-    res = cur.execute("SELECT * FROM users WHERE username=?", (user,))
-    if res.fetchone() is not None:
+    ans = model.find_user(user)
+    if ans is not None:
         print("user exists")
         context = {
             'msg': 'user already exists'
@@ -110,9 +89,7 @@ def register():
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response, 404
     else:
-        res = cur.execute("INSERT into users (username, password) VALUES(?, ?)",
-                          (user, pwd))
-        con.commit()
+        model.insert_user(user, pwd)
         
     context = {
         "user": user,
