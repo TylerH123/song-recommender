@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, session, g
+from flask_cors import CORS
 from dotenv import load_dotenv
 import hashlib
 import os
@@ -32,8 +33,9 @@ WEATHER_TO_GENRE = {
     "clear": ["pop", "electronic", "ambient"],
     "clouds": ["indie", "folk", "ambient"],
 }
-app = Flask(__name__)
 
+app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def index():
@@ -42,6 +44,16 @@ def index():
         "popular songs": "/popular"
     }
     return jsonify(**json), 200
+
+
+def get_db():
+    """Open a new database connection."""
+    if 'sqlite_db' not in g:
+        g.sqlite_db = sqlite3.connect("../var/db.sqlite3")
+        # Foreign keys have to be enabled per-connection.  This is an sqlite3
+        # backwards compatibility thing.
+        g.sqlite_db.execute('PRAGMA foreign_keys = ON')
+    return g.sqlite_db
 
 
 def getSpotifySongs(genre):
@@ -53,43 +65,64 @@ def getSpotifySongs(genre):
 
 
 @app.route("/login", methods=["POST"])
-def getLogin(user, pwd):
-    pwd = hashlib.sha512(pwd.encode())
-    pwd.update("randomsalt".encode())
-    con = sqlite3.connect("497.db")
+def login():
+    data = request.get_json(silent=True)
+    user = data.get('username')
+    pwd = data.get('password')    
+    con = get_db()    
     cur = con.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS logins(name, pwdhash, song)")
-    res = cur.execute("SELECT * FROM logins WHERE name=? AND pwdhash=?",(user, pwd.hexdigest(),))
+    res = cur.execute("SELECT * FROM users WHERE username=? AND password=?", (user, pwd))
     ans = res.fetchone()
     if ans is None:
         print("none exists")
-        print(pwd.hexdigest())
+        print(pwd)
+        context = {}
+        response = jsonify(context)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 404
     else:
         print("found one")
         print(ans)
-    return 
+    context = {
+        "user": user,
+        "pwd": pwd
+    }
+    response = jsonify(context)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response,200
 
 @app.route("/register", methods=["POST"])
-def register(user, pwd):
-    con = sqlite3.connect("497.db")
+def register():
+    print("reached register")
+    data = request.get_json(silent=True)
+    user = data.get('username')
+    pwd = data.get('password')
+    con = get_db()
     cur = con.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS logins(name, pwdhash, song)")
-    res = cur.execute("SELECT * FROM logins WHERE name=?", (user,))
+    print(user, pwd)
+    res = cur.execute("SELECT * FROM users WHERE username=?", (user,))
     if res.fetchone() is not None:
-        #print("user exists")
-        pass
+        print("user exists")
+        context = {
+            'msg': 'user already exists'
+        }
+        response = jsonify(context)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 404
     else:
-        #print("doesn't exist")
-        pwd = hashlib.sha512(pwd.encode())
-        pwd.update("randomsalt".encode())
-        res = cur.execute("INSERT into logins VALUES(?, ? ,?)", (user, pwd.hexdigest(), "test-song"))  
+        res = cur.execute("INSERT into users (username, password) VALUES(?, ?)",
+                          (user, pwd))
         con.commit()
-def test1():
-    register("test1", "test")
-    getLogin("test1", "test")
+        
+    context = {
+        "user": user,
+        "pwd": pwd
+    }
+    response = jsonify(context)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response,200
 
-if __name__ == '__main__' :
-    test1()
+
 @app.route("/recommend/<int:zip>", methods=["GET"])
 def getRecommendedSongs(zip):
     """songs based on weather in area"""
@@ -125,8 +158,31 @@ def getRecommendedSongs(zip):
 @app.route("/popular/")
 def getPopularSongs():
     """popular songs in the area"""
+    zipcode = request.args.get("zip_code")
+    if not zipcode:
+        return jsonify({"error": "bad request"}), 400
+    con = get_db()
+    cur = con.cursor()
     url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
     return
+
+
+@app.route("/favorite/")
+def favoriteSong():
+    """favorite a song."""
+    song_id = request.args.get("song_id")
+    zipcode = request.args.get("zip_code")
+    if not song_id or not zipcode:
+        return jsonify({"error": "bad request"}), 400
+    con = get_db()
+    cur = con.cursor()
+    if uid not in session:
+        return jsonify({"error": "unauthorized"}), 401
+    uid = session['user_id']
+    cur.execute("INSERT INTO favorites VALUES(?, ?, ?)", (uid, song_id, zipcode),)
+    response = jsonify({"user_id": uid, "song_id": song_id, "zipcode": zipcode})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response, 200
 
 
 def getAccessToken():

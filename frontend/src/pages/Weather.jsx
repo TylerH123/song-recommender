@@ -47,20 +47,51 @@ const Weather = () => {
           />
         </div>
         {
-          <div>
+          // <div>
+          //   {Object.keys(songs).map((genre) => (
+          //     <>
+          //       <h2>{genre}</h2>
+          //       <ul>
+          //         {songs[genre].map((song) => (
+          //           <li>{song.name}</li>
+          //         ))}
+          //       </ul>
+          //     </>
+          //   ))}
+          // </div>
+        <>
+          <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'/>
+          <div className="genres-div">
             {Object.keys(songs).map((genre) => (
               <>
-                <h2>{genre}</h2>
+                {/* <h2>{genre}</h2>
                 <ul>
                   {songs[genre].map((song) => (
                     <li>{song.name}</li>
                   ))}
-                </ul>
+                </ul> */}
+                <Card genre={genre} songs={songs[genre]}/>
               </>
             ))}
           </div>
+        </>
         }
       </main>
+    </div>
+  );
+};
+
+const Card = ({genre, songs}) => {
+  return (
+    <div className="genre-card">
+      <h2 className="genre-title">{genre}</h2>
+      <ul className="genre-card-list">
+        {songs.map((song, index) => (
+          <li key={index}>
+            {song.name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

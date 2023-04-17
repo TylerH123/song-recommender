@@ -82,3 +82,30 @@ main {
 .searchBar:focus {
   background: rgba(255, 255, 255, 0.75);
 }
+
+.genre-card-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.genre-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+}
+
+.genre-card {
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2vh;
+  margin: 5vh;
+  border-radius: 1vh;
+}
+
+.genres-div {
+  font-family: 'Lato';
+  display: flex;
+  flex-direction: row;
+}
+
