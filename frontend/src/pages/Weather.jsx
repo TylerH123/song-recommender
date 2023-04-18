@@ -34,8 +34,15 @@ const Weather = () => {
     // return 0;
   }
   return (
+
     <div className="weatherDiv">
+      
       <main className="weatherMain">
+        <h1>Song Recommender</h1>
+        <h2>
+          Input your Zipcode to get the recommended songs in the area based on
+          the weather
+        </h2>
         <div className="searchBox">
           <input
             type="text"
@@ -59,35 +66,38 @@ const Weather = () => {
           //     </>
           //   ))}
           // </div>
-        <>
-          <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'/>
-          <div className="genres-div">
-            {Object.keys(songs).map((genre) => (
-              <>
-                {/* <h2>{genre}</h2>
+          <>
+            <link
+              href="https://fonts.googleapis.com/css?family=Lato"
+              rel="stylesheet"
+            />
+            <div className="genres-div">
+              {Object.keys(songs).map((genre) => (
+                <>
+                  {/* <h2>{genre}</h2>
                 <ul>
                   {songs[genre].map((song) => (
                     <li>{song.name}</li>
                   ))}
                 </ul> */}
-                <Card genre={genre} songs={songs[genre]}/>
-              </>
-            ))}
-          </div>
-        </>
+                  <Card genre={genre} songs={songs[genre]} />
+                </>
+              ))}
+            </div>
+          </>
         }
       </main>
     </div>
   );
 };
 
-const Card = ({genre, songs}) => {
+const Card = ({ genre, songs }) => {
   return (
-    <div className="genre-card">
-      <h2 className="genre-title">{genre}</h2>
-      <ul className="genre-card-list">
+    <div class="card" style="width: 18rem;">
+      <div class="card-header">{genre}</div>
+      <ul class="list-group list-group-flush">
         {songs.map((song, index) => (
-          <li key={index}>
+          <li class="list-group-item" key={index}>
             {song.name}
           </li>
         ))}
@@ -95,5 +105,4 @@ const Card = ({genre, songs}) => {
     </div>
   );
 };
-
 export default Weather;

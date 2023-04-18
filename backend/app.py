@@ -56,7 +56,6 @@ def getAccessToken():
 
 
 access_token = getAccessToken()
-threads = []
 
 
 @app.route("/")
@@ -72,8 +71,9 @@ def getSpotifySongs(genre, songs_map):
     url = f"https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track"
     headers = {"Authorization": "Bearer " + access_token}
     res = requests.get(url, headers=headers).json()
-    songs_map[genre] = [] 
+    songs_map[genre] = []
     for song in res["tracks"]["items"]:
+        print(res["tracks"]["items"])
         songs_map[genre].append(song)
 
 
@@ -141,11 +141,14 @@ def getRecommendedSongs(zip):
     # get songs
     genres = WEATHER_TO_GENRE[weather]
     songs_map = {}
+    threads = []
     for genre in genres:
         songs_map[genre] = []
         g_thread = threading.Thread(target=getSpotifySongs, args=(genre, songs_map))
         threads.append(g_thread)
         g_thread.start() 
+    for th in threads:
+        th.join()
     context = {
         "temperature": temp,
         "weather": weather,
@@ -190,12 +193,6 @@ def getAvailableGenres():
     headers = {"Authorization": "Bearer " + access_token}
     res = requests.get(url, headers=headers).json()
     return res['genres']
-
-
-@app.teardown_appcontext
-def shutdown():
-    for th in threads:
-        th.join()
 
 
 if __name__ == "__main__":

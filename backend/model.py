@@ -51,4 +51,4 @@ def insert_user(user, pwd):
 
 def get_songs_at_state(state):
     """Get songs for given state."""
-    
+    return

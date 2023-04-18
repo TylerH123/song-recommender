@@ -7,7 +7,7 @@ CREATE TABLE users(
 );
 
 CREATE TABLE songs(
-    sid INTEGER PRIMARY KEY AUTOINCREMENT,
+    sid VARCHAR(256) PRIMARY KEY,
     title VARCHAR(256)
 );
 

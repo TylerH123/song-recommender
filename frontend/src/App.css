@@ -104,8 +104,28 @@ main {
 }
 
 .genres-div {
-  font-family: 'Lato';
+  font-family: "Lato";
   display: flex;
   flex-direction: row;
 }
 
+h1 {
+  color: #111;
+  font-family: "Helvetica Neue", sans-serif;
+  font-size: 50px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-align: center;
+}
+
+h2 {
+  color: #7c795d;
+  font-family: "Source Sans Pro", sans-serif;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 32px;
+  margin: 0 0 24px;
+}
