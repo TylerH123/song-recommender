@@ -82,7 +82,7 @@ const Login = () => {
         </Button>
         <div>
           Don't have an account?
-          <Link to="/signup" className="loginHref">
+          <Link to="/" className="loginHref">
             Sign Up
           </Link>
         </div>

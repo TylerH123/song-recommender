@@ -1,8 +1,7 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE users(
-    uid INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(20),
+    username VARCHAR(20) PRIMARY KEY,
     password VARCHAR(256)
 );
 
@@ -12,11 +11,11 @@ CREATE TABLE songs(
 );
 
 CREATE TABLE favorites(
-    uid INTEGER, 
+    username VARCHAR(20), 
     sid INTEGER,
     state VARCHAR(256), 
-    PRIMARY KEY (uid, sid),
-    FOREIGN KEY (uid) REFERENCES users (uid)
+    PRIMARY KEY (username, sid),
+    FOREIGN KEY (username) REFERENCES users (username)
         ON DELETE CASCADE, 
     FOREIGN KEY (sid) REFERENCES songs (sid)
         ON DELETE CASCADE

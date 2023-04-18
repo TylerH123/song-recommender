@@ -20,8 +20,7 @@ function App() {
             <Route exact path="/login">
               <Login />
             </Route>
-            <Route exact path="/">
-              <Signup />
+            <Route exact path="/">             <Signup />
             </Route>
             <Route exact path="/weather">
               <Weather />

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, session, g
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -36,6 +36,8 @@ WEATHER_TO_GENRE = {
 }
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = b'\xaf\xed\xaaR\x18:\\\xbd\x16\xc9\xfb\x0c.\xf8\xa5:\xfb\xfc\x84*\x1c\xbd3\xdd'
+app.config['SESSION_COOKIE_NAME'] = 'login'
 CORS(app)
 
 
@@ -56,6 +58,7 @@ def getAccessToken():
 
 
 access_token = getAccessToken()
+session = {'login': '123'}
 
 
 @app.route("/")
@@ -73,7 +76,6 @@ def getSpotifySongs(genre, songs_map):
     res = requests.get(url, headers=headers).json()
     songs_map[genre] = []
     for song in res["tracks"]["items"]:
-        print(res["tracks"]["items"])
         songs_map[genre].append(song)
 
 
@@ -93,6 +95,8 @@ def login():
         "user": user,
         "pwd": pwd
     }
+    session['login'] = user
+    print(session)
     response = jsonify(context)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response,200
@@ -126,6 +130,7 @@ def register():
 @app.route("/recommend/<int:zip>", methods=["GET"])
 def getRecommendedSongs(zip):
     """songs based on weather in area"""
+    print(session)
     # get lat, lon
     url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip},{COUNTRY_CODE}&appid={WEATHER_API_KEY}"
     json = requests.get(url).json()
@@ -165,25 +170,48 @@ def getPopularSongs(zipcode):
     # zipcode = request.args.get("zip_code")
     url = f"https://app.zipcodebase.com/api/v1/search?apikey={ZIP_API_KEY}&codes={zipcode}&country=US"
     # if not zipcode:
-    #     return jsonify({"error": "bad request"}), 400
-    # # url = "https://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
-    data = requests.get(url).json()
-    print(data['results'][str(zipcode)][0]['state'])
-    return jsonify(data), 200
+
+    # cur = 
+    # s = c moreturn jsonify
+    # res = c({"error": "bad request"}), 400
+
+
+    '''
+        
+        for song in res:
+
+    '''   
+    # for      url# ttps://api.spotify.com/v1/search?q=genre%3Avaporwave&type=track"
+    # data = requests.get(url).json()
+    # print(data['results'][str(zipcode)][0]['state'])
+    # return jsonify(data), 200
 
 
 @app.route("/favorite", methods=['POST'])
 def favoriteSong():
     """Favorite a song."""
-    song_id = request.args.get("song_id")
-    zipcode = request.args.get("zip_code")
-    if not song_id or not zipcode:
+    print(session)
+    if 'login' not in session:
+        print("user not logged in")
+        context = {
+            'msg': 'no user not logged in'
+        }
+        response = jsonify(context)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 404
+    user = session['login']
+    data = request.get_json(silent=True)
+    song_id = data['songId']
+    zipcode = data['zipcode']
+    songname = data['songName']
+    if not song_id or not zipcode or not songname:
         return jsonify({"error": "bad request"}), 400
-    if uid not in session:
-        return jsonify({"error": "unauthorized"}), 401
-    uid = session['user_id']
-    cur.execute("INSERT INTO favorites VALUES(?, ?, ?)", (uid, song_id, zipcode),)
-    response = jsonify({"user_id": uid, "song_id": song_id, "zipcode": zipcode})
+    print(ZIP_API_KEY)
+    url = f"https://app.zipcodebase.com/api/v1/search?apikey={ZIP_API_KEY}&codes={zipcode}&country=US"
+    state = requests.get(url).json()['results'][str(zipcode)][0]['state']
+    model.insert_song(song_id, songname)
+    model.favorite_song(user, song_id, state)
+    response = jsonify({"username": user, "song_id": song_id, "zipcode": zipcode})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response, 200
 
